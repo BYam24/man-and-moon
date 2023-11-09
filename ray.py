@@ -172,7 +172,7 @@ class Camera:
         self.M = np.zeros((4,4))  # set this to the matrix that transforms your camera's coordinate system to world coordinates
 
         # TODO A4 implement this constructor to store whatever you need for ray generation
-        y_dir = normalize_vec3(up)
+        # y_dir = normalize_vec3(up)
         z_dir = normalize_vec3(-(target-eye))
         x_dir = normalize_vec3(np.cross(target-eye,up))
         y_dir = normalize_vec3(np.cross(z_dir,x_dir))
@@ -326,7 +326,10 @@ def render_image(camera, scene, lights, nx, ny):
             ray = camera.generate_ray(vec([j/nx,i/ny]))
             intersection = scene.surfs[0].intersect(ray)  # this will return a Hit object
             if intersection!= no_hit:
-                output_image[i,j] = np.array([255,255,255])
+                material_at_pixel = intersection.material
+                output_image[i,j] = material_at_pixel.k_d
+            else:
+                output_image[i, j] = scene.bg_color
 
             # set the output pixel color if an intersection is found
             # ...
