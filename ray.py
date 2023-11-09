@@ -96,6 +96,35 @@ class Sphere:
           Hit -- the hit data
         """
         # TODO A4 implement this function
+        p = ray.origin-self.center
+        v = ray.direction
+        c = p.transpose().dot(p)-self.radius*self.radius
+        b = 2* p.transpose().dot(v)
+        a = v.transpose().dot(v)
+        delta = b*b-4*a*c
+        if delta<0:
+            return no_hit
+        else:
+            t1 = (-b-np.sqrt(delta))/(2*a)
+            t2 = (-b + np.sqrt(delta)) / (2 * a)
+            if ray.start < t1 < ray.end:
+                hit_t = t1
+                intersect_h = p+t1*v
+                hit_intersect = intersect_h+self.center
+                norm_factor = np.sqrt(
+                    intersect_h[0] * intersect_h[0] + intersect_h[1] * intersect_h[1] + intersect_h[2] * intersect_h[2])
+                hit_norm = intersect_h / norm_factor
+                hit_material = self.material
+                return Hit(hit_t,hit_intersect,hit_norm,hit_material)
+            elif ray.start < t2 < ray.end:
+                hit_t = t2
+                intersect_h = p + t2 * v
+                hit_intersect = intersect_h + self.center
+                norm_factor = np.sqrt(intersect_h[0]*intersect_h[0] + intersect_h[1]*intersect_h[1] + intersect_h[2]*intersect_h[2])
+                hit_norm = intersect_h/norm_factor
+                hit_material = self.material
+                return Hit(hit_t, hit_intersect, hit_norm, hit_material)
+
         return no_hit
 
 
