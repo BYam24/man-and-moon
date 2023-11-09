@@ -274,7 +274,16 @@ class Scene:
           Hit -- the hit data
         """
         # TODO A4 implement this function
-        return no_hit
+        res = no_hit
+        t_min = np.inf
+        for surf in self.surfs:
+            temp = surf.intersect(ray)
+            if temp != no_hit:
+                if temp.t<t_min:
+                    res = temp
+                    t_min = temp.t
+
+        return res
 
 
 MAX_DEPTH = 4
@@ -322,9 +331,9 @@ def render_image(camera, scene, lights, nx, ny):
     output_image = np.zeros((ny, nx, 3), np.float32)
     for i in range(ny):
         for j in range(nx):
-            [x_on_plane,y_on_plane] = texture_to_image_plane(nx,ny,j,i)
+            # [x_on_plane,y_on_plane] = texture_to_image_plane(nx,ny,j,i)
             ray = camera.generate_ray(vec([j/nx,i/ny]))
-            intersection = scene.surfs[0].intersect(ray)  # this will return a Hit object
+            intersection = scene.intersect(ray)  # this will return a Hit object
             if intersection!= no_hit:
                 material_at_pixel = intersection.material
                 output_image[i,j] = material_at_pixel.k_d
