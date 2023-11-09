@@ -232,7 +232,11 @@ class PointLight:
             r_sq = hit_to_source[0]*hit_to_source[0]+hit_to_source[1]*hit_to_source[1]+hit_to_source[2]*hit_to_source[2]
             n_dot_l = n.dot(l)
             irradiance = (np.max([0,n_dot_l])/r_sq)*self.intensity
-            color = np.multiply(hit.material.k_d, irradiance)
+            v = -ray.direction
+            h = normalize_vec3(v+l)
+            n_dot_h = n.dot(h)
+            n_dot_h_pow = np.power(n_dot_h,hit.material.p)
+            color = np.multiply(hit.material.k_d + hit.material.k_s*n_dot_h_pow, irradiance)
 
         return color
 
