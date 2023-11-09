@@ -167,9 +167,21 @@ class Camera:
         """
         self.eye = eye
         self.aspect = aspect
-        self.f = None; # you should set this to the distance from your center of projection to the image plane
-        self.M = np.eye(4);  # set this to the matrix that transforms your camera's coordinate system to world coordinates
+        half_theta = (vfov/2)/180*np.pi
+        self.f = 1/np.tan(half_theta) # you should set this to the distance from your center of projection to the image plane
+        self.M = np.zeros((4,4))  # set this to the matrix that transforms your camera's coordinate system to world coordinates
+
         # TODO A4 implement this constructor to store whatever you need for ray generation
+        y_dir = normalize_vec3(up)
+        z_dir = normalize_vec3(-(target-eye))
+        x_dir = normalize_vec3(np.cross(target-eye,up))
+        y_dir = normalize_vec3(np.cross(z_dir,x_dir))
+        for i in range(3):
+            self.M[i, 0] = x_dir[i]
+            self.M[i, 1] = y_dir[i]
+            self.M[i, 2] = z_dir[i]
+            self.M[i, 3] = eye[i]
+        self.M[3,3] = 1
 
     def generate_ray(self, img_point):
         """Compute the ray corresponding to a point in the image.
@@ -183,7 +195,12 @@ class Camera:
           Ray -- The ray corresponding to that image location (not necessarily normalized)
         """
         # TODO A4 implement this function
-        return Ray(vec([0,0,0]), vec([0,0,1]))
+        x_on_img_plane = (img_point[0]-0.5)*2*self.aspect
+        y_on_img_plane = -(img_point[1]-0.5)*2
+        img_point_in_camera = np.array([[x_on_img_plane],[y_on_img_plane],[-self.f],[1]])
+        img_point_in_world = self.M.dot(img_point_in_camera)
+        img_point_in_world_vec3 = vec([img_point_in_world[0,0],img_point_in_world[1,0],img_point_in_world[2,0]])
+        return Ray(self.eye, normalize_vec3(img_point_in_world_vec3-self.eye))
 
 
 class PointLight:
@@ -285,6 +302,9 @@ def texture_to_image_plane(w,h,x,y):
     y_res = -(y-h/2)/(h/2)
     return [x_res,y_res]
 
+def normalize_vec3(v):
+    n = np.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])
+    return v/n
 
 def render_image(camera, scene, lights, nx, ny):
     """Render a ray traced image.
@@ -303,7 +323,7 @@ def render_image(camera, scene, lights, nx, ny):
     for i in range(ny):
         for j in range(nx):
             [x_on_plane,y_on_plane] = texture_to_image_plane(nx,ny,j,i)
-            ray = Ray(vec([x_on_plane,y_on_plane,0.0]), vec([0.0,0.0,-1.0]))
+            ray = camera.generate_ray(vec([j/nx,i/ny]))
             intersection = scene.surfs[0].intersect(ray)  # this will return a Hit object
             if intersection!= no_hit:
                 output_image[i,j] = np.array([255,255,255])
