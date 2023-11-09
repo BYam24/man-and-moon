@@ -226,7 +226,7 @@ class PointLight:
         blocked = False
         color = vec([0,0,0])
         shadow_ray_dir = normalize_vec3(self.position-hit.point)
-        shadow_ray = Ray(hit.point,shadow_ray_dir,start=0.0001)
+        shadow_ray = Ray(hit.point,shadow_ray_dir,start=small_delta_for_shadow)
         scene_shadow_intersect = scene.intersect(shadow_ray)
         if scene_shadow_intersect != no_hit:
             blocked = True
@@ -326,6 +326,18 @@ def shade(ray, hit, scene, lights, depth=0):
     color = vec([0,0,0])
     for light in lights:
         color+=light.illuminate(ray, hit, scene)
+
+    if depth<=MAX_DEPTH:
+        # get mirror value
+        v= - ray.direction
+        n = hit.normal
+        reflected_dir = 2*(n.dot(v))*n-v
+        reflected_ray = Ray(hit.point,reflected_dir,start=small_delta_for_shadow)
+        reflection_intersection = scene.intersect(reflected_ray)
+        if reflection_intersection != no_hit:
+            L_r = shade(reflected_ray,reflection_intersection,scene,lights,depth+1)
+            color+= np.multiply(hit.material.k_m, L_r)
+
     return color
 
 
@@ -337,6 +349,8 @@ def texture_to_image_plane(w,h,x,y):
 def normalize_vec3(v):
     n = np.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])
     return v/n
+
+small_delta_for_shadow = 0.0001
 
 def render_image(camera, scene, lights, nx, ny):
     """Render a ray traced image.
