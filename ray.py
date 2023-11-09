@@ -111,17 +111,14 @@ class Sphere:
                 hit_t = t1
                 intersect_h = p+t1*v
                 hit_intersect = intersect_h+self.center
-                norm_factor = np.sqrt(
-                    intersect_h[0] * intersect_h[0] + intersect_h[1] * intersect_h[1] + intersect_h[2] * intersect_h[2])
-                hit_norm = intersect_h / norm_factor
+                hit_norm = normalize_vec3(intersect_h)
                 hit_material = self.material
                 return Hit(hit_t,hit_intersect,hit_norm,hit_material)
             elif ray.start < t2 < ray.end:
                 hit_t = t2
                 intersect_h = p + t2 * v
                 hit_intersect = intersect_h + self.center
-                norm_factor = np.sqrt(intersect_h[0]*intersect_h[0] + intersect_h[1]*intersect_h[1] + intersect_h[2]*intersect_h[2])
-                hit_norm = intersect_h/norm_factor
+                hit_norm = normalize_vec3(intersect_h)
                 hit_material = self.material
                 return Hit(hit_t, hit_intersect, hit_norm, hit_material)
 
