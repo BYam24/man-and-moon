@@ -146,6 +146,31 @@ class Triangle:
           Hit -- the hit data
         """
         # TODO A4 implement this function
+        p = ray.origin
+        d = ray.direction
+        a = vec(self.vs[0])
+        b = vec(self.vs[2])
+        c = vec(self.vs[1])
+        A=np.zeros((3,3))
+        RHS = np.zeros((3,1))
+        for i in range(3):
+            A[i,0] = d[i]
+            A[i,1] = a[i]-b[i]
+            A[i,2] = a[i]-c[i]
+            RHS[i,0] = a[i]-p[i]
+        result = np.linalg.inv(A).dot(RHS)
+        t = result[0,0]
+        beta = result[1,0]
+        gamma = result[2,0]
+
+        if beta>0 and gamma>0 and beta+gamma<1:
+            if ray.start< t < ray.end:
+                intersection_pos = p+d*t
+                hit_norm = normalize_vec3(np.cross(c-a, b-a))
+                return Hit(t, intersection_pos, hit_norm, self.material)
+
+
+
         return no_hit
 
 
