@@ -280,6 +280,12 @@ def shade(ray, hit, scene, lights, depth=0):
     return vec([0,0,0])
 
 
+def texture_to_image_plane(w,h,x,y):
+    x_res = (x-w/2)/(w/2)
+    y_res = -(y-h/2)/(h/2)
+    return [x_res,y_res]
+
+
 def render_image(camera, scene, lights, nx, ny):
     """Render a ray traced image.
 
@@ -292,4 +298,17 @@ def render_image(camera, scene, lights, nx, ny):
       (ny, nx, 3) float32 -- the RGB image
     """
     # TODO A4 implement this function
-    return np.zeros((ny,nx,3), np.float32)
+
+    output_image = np.zeros((ny, nx, 3), np.float32)
+    for i in range(ny):
+        for j in range(nx):
+            [x_on_plane,y_on_plane] = texture_to_image_plane(nx,ny,j,i)
+            ray = Ray(vec([x_on_plane,y_on_plane,0.0]), vec([0.0,0.0,-1.0]))
+            intersection = scene.surfs[0].intersect(ray)  # this will return a Hit object
+            if intersection!= no_hit:
+                output_image[i,j] = np.array([255,255,255])
+
+            # set the output pixel color if an intersection is found
+            # ...
+
+    return output_image
