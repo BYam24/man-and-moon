@@ -223,9 +223,16 @@ class PointLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
-        shadow = False
+        blocked = False
         color = vec([0,0,0])
-        if not shadow:
+        shadow_ray_dir = normalize_vec3(self.position-hit.point)
+        shadow_ray = Ray(hit.point,shadow_ray_dir,start=0.0001)
+        scene_shadow_intersect = scene.intersect(shadow_ray)
+        if scene_shadow_intersect != no_hit:
+            blocked = True
+
+
+        if not blocked:
             n = hit.normal
             hit_to_source = self.position - hit.point
             l = normalize_vec3(hit_to_source)
