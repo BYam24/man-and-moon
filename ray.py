@@ -223,7 +223,18 @@ class PointLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
-        return vec([0,0,0])
+        shadow = False
+        color = vec([0,0,0])
+        if not shadow:
+            n = hit.normal
+            hit_to_source = self.position - hit.point
+            l = normalize_vec3(hit_to_source)
+            r_sq = hit_to_source[0]*hit_to_source[0]+hit_to_source[1]*hit_to_source[1]+hit_to_source[2]*hit_to_source[2]
+            n_dot_l = n.dot(l)
+            irradiance = (np.max([0,n_dot_l])/r_sq)*self.intensity
+            color = np.multiply(hit.material.k_d, irradiance)
+
+        return color
 
 
 class AmbientLight:
@@ -247,7 +258,8 @@ class AmbientLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
-        return vec([0,0,0])
+
+        return np.multiply(hit.material.k_a,self.intensity)
 
 
 class Scene:
@@ -300,7 +312,10 @@ def shade(ray, hit, scene, lights, depth=0):
     of MAX_DEPTH, with zero contribution beyond that depth.
     """
     # TODO A4 implement this function
-    return vec([0,0,0])
+    color = vec([0,0,0])
+    for light in lights:
+        color+=light.illuminate(ray, hit, scene)
+    return color
 
 
 def texture_to_image_plane(w,h,x,y):
@@ -333,7 +348,7 @@ def render_image(camera, scene, lights, nx, ny):
             intersection = scene.intersect(ray)  # this will return a Hit object
             if intersection!= no_hit:
                 material_at_pixel = intersection.material
-                output_image[i,j] = material_at_pixel.k_d
+                output_image[i,j] = shade(ray,intersection, scene, lights)
             else:
                 output_image[i, j] = scene.bg_color
 
