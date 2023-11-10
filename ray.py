@@ -404,5 +404,6 @@ def render_image(camera, scene, lights, nx, ny):
 
             # set the output pixel color if an intersection is found
             # ...
+    output_image = np.clip(output_image,0,255)
 
     return output_image
