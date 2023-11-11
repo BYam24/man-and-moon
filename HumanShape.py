@@ -28,7 +28,7 @@ for i in range(3):
     tranformation_matrix[i, 2] = z_dir[i]
     tranformation_matrix[i, 3] = model_pos[i]
 
-deg_z = 60
+deg_z = 75
 theta_z = deg_z*np.pi/180
 t_z = np.zeros((4,4))
 t_z[0,0] = np.cos(theta_z)
@@ -70,11 +70,11 @@ scene = Scene(
 ])
 
 lights = [
-    PointLight(vec([12,10,10]), vec([300,300,300])),
+    PointLight(vec([12,10,7]), vec([300,300,300])),
     AmbientLight(0.1),
 ]
 
-camera = Camera(vec([0,0,5]), target=vec([0,0,0]), vfov=25, aspect=16/9)
+camera = Camera(vec([3,1.2,5]), target=vec([0,-0.4,0]), vfov=25, aspect=16/9)
 
 render(camera, scene, lights)
 
