@@ -574,6 +574,8 @@ def shade(ray, hit, scene, lights, depth=0):
         if reflection_intersection != no_hit:
             L_r = shade(reflected_ray, reflection_intersection, scene, lights, depth + 1)
             color += np.multiply(hit.material.k_m, L_r)
+        else:
+            color += np.multiply(hit.material.k_m, scene.bg_color)
 
     return color
 
