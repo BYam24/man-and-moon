@@ -15,6 +15,10 @@ not be the best way to handle such validation in industrial-strength code but we
 this rule to keep things simple and efficient.)
 """
 
+MAX_DEPTH = 4
+MAX_LEAF_ELE = 7
+small_delta_for_shadow = 0.0001
+
 
 class Ray:
 
@@ -321,6 +325,7 @@ class Box:
         self.y_max = 0
         self.z_min = 0
         self.z_max = 0
+        self.temp = []
 
     def set_ax(self, axis, min_v, max_v):
         if axis == 0:
@@ -333,13 +338,44 @@ class Box:
             self.z_min = min_v
             self.z_max = max_v
 
-
     def generate_ax_table(self):
         return np.array([[self.x_min, self.x_max], [self.y_min, self.y_max], [self.z_min, self.z_max]])
 
-    def set_by_ax_table(self,ax_table):
+    def set_by_ax_table(self, ax_table):
         for i in range(3):
-            self.set_ax(i,ax_table[i,0],ax_table[i,1])
+            self.set_ax(i, ax_table[i, 0], ax_table[i, 1])
+        return
+
+    def point_in_box(self, point):
+        if point[0]< self.x_min-small_delta_for_shadow or point[0] > self.x_max+small_delta_for_shadow:
+            return False
+        if point[1] < self.y_min-small_delta_for_shadow or point[1] > self.y_max+small_delta_for_shadow:
+            return False
+        if point[2]< self.z_min-small_delta_for_shadow or point[2] > self.z_max+small_delta_for_shadow:
+            return False
+        return True
+
+    def has_intersect(self, ray):
+        self.temp = []
+        ax_table = self.generate_ax_table()
+        for i in range(3):
+            if ray.direction[i] != 0:
+                t1 = (ax_table[i, 0] - ray.origin[i]) / ray.direction[i]
+
+                if ray.start-0.01 < t1 < ray.end+0.01:
+                    hit_point = ray.origin + ray.direction * t1
+                    self.temp.append(hit_point)
+                    if self.point_in_box(hit_point):
+                        return True
+
+                t2 = (ax_table[i, 1] - ray.origin[i]) / ray.direction[i]
+                if ray.start-0.01 < t2 < ray.end+0.01:
+                    hit_point = ray.origin + ray.direction * t2
+                    self.temp.append(hit_point)
+                    if self.point_in_box(hit_point):
+                        return True
+
+        return False
 
 
 # def compare_surf_x(s1, s2):
@@ -354,7 +390,6 @@ class Box:
 #     return s1.z_max - s2.z_max
 
 
-MAX_LEAF_ELE = 2
 
 
 class Node:
@@ -365,6 +400,7 @@ class Node:
         self.surfs = None
         self.is_leaf = True
         self.cur_sep_ax = sep_ax
+        self.temp=[]
 
     def set_surfs(self, surface_list):
         if len(surface_list) <= MAX_LEAF_ELE:
@@ -392,7 +428,7 @@ class Node:
             y_max = (max(left_surface_list, key=lambda x: x.y_max)).y_max
             z_min = (min(left_surface_list, key=lambda x: x.z_min)).z_min
             z_max = (max(left_surface_list, key=lambda x: x.z_max)).z_max
-            left_node_table  = np.array([[x_min, x_max], [y_min, y_max], [z_min, z_max]])
+            left_node_table = np.array([[x_min, x_max], [y_min, y_max], [z_min, z_max]])
             # left_node_table = self.box.generate_ax_table()
             # if self.cur_sep_ax == 0:
             #     left_node_table[0,1] = (max(left_surface_list, key=lambda x: x.x_max)).x_max
@@ -410,7 +446,7 @@ class Node:
             y_max = (max(right_surface_list, key=lambda x: x.y_max)).y_max
             z_min = (min(right_surface_list, key=lambda x: x.z_min)).z_min
             z_max = (max(right_surface_list, key=lambda x: x.z_max)).z_max
-            right_node_table  = np.array([[x_min, x_max], [y_min, y_max], [z_min, z_max]])
+            right_node_table = np.array([[x_min, x_max], [y_min, y_max], [z_min, z_max]])
             # right_node_table = self.box.generate_ax_table()
             # if self.cur_sep_ax == 0:
             #     right_node_table[0,0] = (min(right_surface_list, key=lambda x: x.x_min)).x_min
@@ -423,6 +459,39 @@ class Node:
 
     def get_next_sep_ax(self):
         return (self.cur_sep_ax + 1) % 3
+
+    def intersection(self,ray):
+        self.temp=[]
+        if self.is_leaf:
+            res = no_hit
+            t_min = np.inf
+            for surf in self.surfs:
+                temp = surf.intersect(ray)
+                if temp != no_hit:
+                    if temp.t < t_min:
+                        res = temp
+                        t_min = temp.t
+
+            return res
+        else:
+            if not self.box.has_intersect(ray):
+
+                return no_hit
+            left_hit = self.left_node.intersection(ray)
+            right_hit = self.right_node.intersection(ray)
+            if left_hit == no_hit and right_hit == no_hit:
+                return no_hit
+            elif left_hit == no_hit:
+                return right_hit
+            elif right_hit == no_hit:
+                return left_hit
+            else:
+                if right_hit.t<left_hit.t:
+                    return right_hit
+                else:
+                    return left_hit
+
+
 
 
 class Scene:
@@ -438,18 +507,18 @@ class Scene:
         self.bg_color = bg_color
         first_sep_ax = 1
         self.root_node = Node(first_sep_ax)
-        x_min = (min(surfs,key=lambda x: x.x_min)).x_min
+        x_min = (min(surfs, key=lambda x: x.x_min)).x_min
         x_max = (max(surfs, key=lambda x: x.x_max)).x_max
         y_min = (min(surfs, key=lambda x: x.y_min)).y_min
         y_max = (max(surfs, key=lambda x: x.y_max)).y_max
         z_min = (min(surfs, key=lambda x: x.z_min)).z_min
         z_max = (max(surfs, key=lambda x: x.z_max)).z_max
-        ax_minmax_table = np.array([[x_min,x_max],[y_min,y_max],[z_min,z_max]])
+        ax_minmax_table = np.array([[x_min, x_max], [y_min, y_max], [z_min, z_max]])
         self.root_node.box.set_by_ax_table(ax_minmax_table)
         self.root_node.set_surfs(self.surfs)
-        print(self.root_node.box.generate_ax_table())
-        print(self.root_node.left_node.box.generate_ax_table())
-        print(self.root_node.right_node.box.generate_ax_table())
+
+
+
 
     def intersect(self, ray):
         """Computes the first (smallest t) intersection between a ray and the scene.
@@ -460,19 +529,20 @@ class Scene:
           Hit -- the hit data
         """
         # TODO A4 implement this function
-        res = no_hit
-        t_min = np.inf
-        for surf in self.surfs:
-            temp = surf.intersect(ray)
-            if temp != no_hit:
-                if temp.t < t_min:
-                    res = temp
-                    t_min = temp.t
+        # res = no_hit
+        # t_min = np.inf
+        # for surf in self.surfs:
+        #     temp = surf.intersect(ray)
+        #     if temp != no_hit:
+        #         if temp.t < t_min:
+        #             res = temp
+        #             t_min = temp.t
+        #
+        # return res
+        return self.root_node.intersection(ray)
 
-        return res
 
-
-MAX_DEPTH = 4
+# MAX_DEPTH = 4
 
 
 def shade(ray, hit, scene, lights, depth=0):
@@ -519,7 +589,6 @@ def normalize_vec3(v):
     return v / n
 
 
-small_delta_for_shadow = 0.0001
 
 
 def render_image(camera, scene, lights, nx, ny):
@@ -536,8 +605,11 @@ def render_image(camera, scene, lights, nx, ny):
     # TODO A4 implement this function
 
     output_image = np.zeros((ny, nx, 3), np.float32)
+    test_ray = Ray(vec([0, 0, 0]), vec([0, -1, 0]))
+    # print(scene.intersect(test_ray).point)
     for i in range(ny):
-        print("row: " + str(i))
+        if i%20 == 0:
+            print("Arriving at: " + str(i) +" row")
         for j in range(nx):
             # [x_on_plane,y_on_plane] = texture_to_image_plane(nx,ny,j,i)
             ray = camera.generate_ray(vec([j / nx, i / ny]))
