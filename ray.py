@@ -334,16 +334,24 @@ class Box:
             self.z_max = max_v
 
 
-def compare_surf_x(s1, s2):
-    return s1.x_max - s2.x_max
+    def generate_ax_table(self):
+        return np.array([[self.x_min, self.x_max], [self.y_min, self.y_max], [self.z_min, self.z_max]])
+
+    def set_by_ax_table(self,ax_table):
+        for i in range(3):
+            self.set_ax(i,ax_table[i,0],ax_table[i,1])
 
 
-def compare_surf_y(s1, s2):
-    return s1.y_max - s2.y_max
-
-
-def compare_surf_z(s1, s2):
-    return s1.z_max - s2.z_max
+# def compare_surf_x(s1, s2):
+#     return s1.x_max - s2.x_max
+#
+#
+# def compare_surf_y(s1, s2):
+#     return s1.y_max - s2.y_max
+#
+#
+# def compare_surf_z(s1, s2):
+#     return s1.z_max - s2.z_max
 
 
 MAX_LEAF_ELE = 2
@@ -378,9 +386,39 @@ class Node:
             next_sep_ax = self.get_next_sep_ax()
 
             self.left_node = Node(next_sep_ax)
+            x_min = (min(left_surface_list, key=lambda x: x.x_min)).x_min
+            x_max = (max(left_surface_list, key=lambda x: x.x_max)).x_max
+            y_min = (min(left_surface_list, key=lambda x: x.y_min)).y_min
+            y_max = (max(left_surface_list, key=lambda x: x.y_max)).y_max
+            z_min = (min(left_surface_list, key=lambda x: x.z_min)).z_min
+            z_max = (max(left_surface_list, key=lambda x: x.z_max)).z_max
+            left_node_table  = np.array([[x_min, x_max], [y_min, y_max], [z_min, z_max]])
+            # left_node_table = self.box.generate_ax_table()
+            # if self.cur_sep_ax == 0:
+            #     left_node_table[0,1] = (max(left_surface_list, key=lambda x: x.x_max)).x_max
+            # elif self.cur_sep_ax == 1:
+            #     left_node_table[1, 1] = (max(left_surface_list, key=lambda x: x.y_max)).y_max
+            # elif self.cur_sep_ax == 2:
+            #     left_node_table[2, 1] = (max(left_surface_list, key=lambda x: x.z_max)).z_max
+            self.left_node.box.set_by_ax_table(left_node_table)
             self.left_node.set_surfs(left_surface_list)
 
             self.right_node = Node(next_sep_ax)
+            x_min = (min(right_surface_list, key=lambda x: x.x_min)).x_min
+            x_max = (max(right_surface_list, key=lambda x: x.x_max)).x_max
+            y_min = (min(right_surface_list, key=lambda x: x.y_min)).y_min
+            y_max = (max(right_surface_list, key=lambda x: x.y_max)).y_max
+            z_min = (min(right_surface_list, key=lambda x: x.z_min)).z_min
+            z_max = (max(right_surface_list, key=lambda x: x.z_max)).z_max
+            right_node_table  = np.array([[x_min, x_max], [y_min, y_max], [z_min, z_max]])
+            # right_node_table = self.box.generate_ax_table()
+            # if self.cur_sep_ax == 0:
+            #     right_node_table[0,0] = (min(right_surface_list, key=lambda x: x.x_min)).x_min
+            # elif self.cur_sep_ax == 1:
+            #     right_node_table[1,0] = (min(right_surface_list, key=lambda x: x.y_min)).y_min
+            # elif self.cur_sep_ax == 2:
+            #     right_node_table[2,0] = (min(right_surface_list, key=lambda x: x.z_min)).z_min
+            self.right_node.box.set_by_ax_table(right_node_table)
             self.right_node.set_surfs(right_surface_list)
 
     def get_next_sep_ax(self):
@@ -398,15 +436,20 @@ class Scene:
         """
         self.surfs = surfs
         self.bg_color = bg_color
-        first_sep_ax = 0
+        first_sep_ax = 1
         self.root_node = Node(first_sep_ax)
-        x_min = min(surfs,key=lambda x: x.x_min)
-        x_max = max(surfs, key=lambda x: x.x_max)
-        y_min = min(surfs, key=lambda x: x.y_min)
-        y_max = max(surfs, key=lambda x: x.y_max)
-        z_min = min(surfs, key=lambda x: x.z_min)
-        z_max = max(surfs, key=lambda x: x.z_max)
+        x_min = (min(surfs,key=lambda x: x.x_min)).x_min
+        x_max = (max(surfs, key=lambda x: x.x_max)).x_max
+        y_min = (min(surfs, key=lambda x: x.y_min)).y_min
+        y_max = (max(surfs, key=lambda x: x.y_max)).y_max
+        z_min = (min(surfs, key=lambda x: x.z_min)).z_min
+        z_max = (max(surfs, key=lambda x: x.z_max)).z_max
+        ax_minmax_table = np.array([[x_min,x_max],[y_min,y_max],[z_min,z_max]])
+        self.root_node.box.set_by_ax_table(ax_minmax_table)
         self.root_node.set_surfs(self.surfs)
+        print(self.root_node.box.generate_ax_table())
+        print(self.root_node.left_node.box.generate_ax_table())
+        print(self.root_node.right_node.box.generate_ax_table())
 
     def intersect(self, ray):
         """Computes the first (smallest t) intersection between a ray and the scene.
