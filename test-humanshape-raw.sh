@@ -1,2 +1,2 @@
-python humanshape.py --nx 64 --outFile hs-64.png
+python humanshape.py --nx 128 --outFile hs-128.png
 

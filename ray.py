@@ -139,7 +139,7 @@ class Sphere:
 
 class Triangle:
 
-    def __init__(self, vs, material):
+    def __init__(self, vs, material, vn = np.zeros((3,3)), normal_correction=False):
         """Create a triangle from the given vertices.
 
         Parameters:
@@ -155,6 +155,8 @@ class Triangle:
         self.y_min = np.min([vs[0, 1], vs[1, 1], vs[2, 1]])
         self.z_max = np.max([vs[0, 2], vs[1, 2], vs[2, 2]])
         self.z_min = np.min([vs[0, 2], vs[1, 2], vs[2, 2]])
+        self.vn = vn
+        self.normal_correction =normal_correction
 
     def intersect(self, ray):
         """Computes the intersection between a ray and this triangle, if it exists.
@@ -185,7 +187,15 @@ class Triangle:
         if beta > 0 and gamma > 0 and beta + gamma < 1:
             if ray.start < t < ray.end:
                 intersection_pos = p + d * t
-                hit_norm = normalize_vec3(np.cross(c - a, b - a))
+                hit_norm = vec([0,0,0])
+                if self.normal_correction:
+                    a_norm = normalize_vec3(vec(self.vn[0]))
+                    b_norm = normalize_vec3(vec(self.vn[1]))
+                    c_norm = normalize_vec3(vec(self.vn[2]))
+                    hit_norm = normalize_vec3(a_norm+(b_norm-a_norm)*beta+(c_norm-a_norm)*gamma)
+
+                else:
+                    hit_norm = normalize_vec3(np.cross(c - a, b - a))
                 return Hit(t, intersection_pos, hit_norm, self.material)
 
         return no_hit
