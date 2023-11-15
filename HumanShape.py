@@ -13,7 +13,7 @@ new_file_name = "temp_humanshape.obj"
 # reformat_obj("humanshape.obj", new_file_name)
 
 vs_list = 0.001 * read_hs_obj_triangles(open("humanshape.obj"))
-vs_normal_list = read_hs_obj_normals(open("humanshape.obj"))
+# vs_normal_list = read_hs_obj_normals(open("humanshape.obj"))
 
 # vs_list = 0.001 * read_obj_triangles(open(new_file_name))
 # vs_list = 0.001 * read_obj_triangles(open('hs-test3000.obj'))
@@ -58,36 +58,36 @@ for tris in vs_list:
     #                              [new_p2_h[0,0], new_p2_h[1,0], new_p2_h[2,0]]]))
     new_vs_list.append(tris)
 
-new_vn_list = []
-for tris in vs_normal_list:
-    p_0 = tris[0]
-    p_0_h = np.array([[p_0[0]],[p_0[1]], [p_0[2]], [1]])
-    new_p0_h = t_z.dot(tranformation_matrix.dot(p_0_h))
-
-    p_1 = tris[1]
-    p_1_h = np.array([[p_1[0]], [p_1[1]], [p_1[2]], [1]])
-    new_p1_h = t_z.dot(tranformation_matrix.dot(p_1_h))
-
-    p_2 = tris[2]
-    p_2_h = np.array([[p_2[0]], [p_2[1]], [p_2[2]], [1]])
-    new_p2_h = t_z.dot(tranformation_matrix.dot(p_2_h))
-    # new_vn_list.append(np.array([[new_p0_h[0,0], new_p0_h[1,0], new_p0_h[2,0]],
-    #                              [new_p1_h[0,0], new_p1_h[1,0], new_p1_h[2,0]],
-    #                              [new_p2_h[0,0], new_p2_h[1,0], new_p2_h[2,0]]]))
-    new_vn_list.append(tris)
+# new_vn_list = []
+# for tris in vs_normal_list:
+#     p_0 = tris[0]
+#     p_0_h = np.array([[p_0[0]],[p_0[1]], [p_0[2]], [1]])
+#     new_p0_h = t_z.dot(tranformation_matrix.dot(p_0_h))
+#
+#     p_1 = tris[1]
+#     p_1_h = np.array([[p_1[0]], [p_1[1]], [p_1[2]], [1]])
+#     new_p1_h = t_z.dot(tranformation_matrix.dot(p_1_h))
+#
+#     p_2 = tris[2]
+#     p_2_h = np.array([[p_2[0]], [p_2[1]], [p_2[2]], [1]])
+#     new_p2_h = t_z.dot(tranformation_matrix.dot(p_2_h))
+#     # new_vn_list.append(np.array([[new_p0_h[0,0], new_p0_h[1,0], new_p0_h[2,0]],
+#     #                              [new_p1_h[0,0], new_p1_h[1,0], new_p1_h[2,0]],
+#     #                              [new_p2_h[0,0], new_p2_h[1,0], new_p2_h[2,0]]]))
+#     new_vn_list.append(tris)
 
 
 tri_list = []
 
 for i in range(len(new_vs_list)):
-    tri_list.append(Triangle(new_vs_list[i],tan,new_vn_list[i],True))
+    tri_list.append(Triangle(new_vs_list[i],tan))
 
 
 
 scene = Scene(
     [
     # Make a big sphere for the floor
-    Sphere(vec([0,-40,0]), 39.5, gray),
+    Sphere(vec([0,0,-40]), 40.75, gray),
 ] +tri_list
 #               [
 #     # Make triangle objects from the vertex coordinates
@@ -96,11 +96,11 @@ scene = Scene(
 )
 
 lights = [
-    PointLight(vec([12,10,7]), vec([300,300,300])),
+    PointLight(vec([-7.5,-2,17]), vec([300,300,300])),
     AmbientLight(0.1),
 ]
 
-camera = Camera(vec([3,1.2,5]), target=vec([0,-0.4,0]), vfov=25, aspect=16/9)
+camera = Camera(vec([-2.1,2.8,1.5]), target=vec([0,0,1]),up=vec([0,0,2]), vfov=25, aspect=16/9)
 
 render(camera, scene, lights)
 

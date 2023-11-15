@@ -187,15 +187,14 @@ class Triangle:
         if beta > 0 and gamma > 0 and beta + gamma < 1:
             if ray.start < t < ray.end:
                 intersection_pos = p + d * t
-                hit_norm = vec([0,0,0])
-                if self.normal_correction:
-                    a_norm = normalize_vec3(vec(self.vn[0]))
-                    b_norm = normalize_vec3(vec(self.vn[1]))
-                    c_norm = normalize_vec3(vec(self.vn[2]))
-                    hit_norm = normalize_vec3(a_norm+(b_norm-a_norm)*beta+(c_norm-a_norm)*gamma)
 
-                else:
-                    hit_norm = normalize_vec3(np.cross(c - a, b - a))
+                hit_norm = normalize_vec3(np.cross(c - a, b - a))
+                # if self.normal_correction:
+                #     a_norm = normalize_vec3(vec(self.vn[0]))
+                #     b_norm = normalize_vec3(vec(self.vn[1]))
+                #     c_norm = normalize_vec3(vec(self.vn[2]))
+                #     hit_norm = normalize_vec3(a_norm+(b_norm-a_norm)*beta+(c_norm-a_norm)*gamma+hit_norm)
+
                 return Hit(t, intersection_pos, hit_norm, self.material)
 
         return no_hit
@@ -624,7 +623,7 @@ def render_image(camera, scene, lights, nx, ny):
             print("Arriving at: " + str(i) +" row")
         for j in range(nx):
             # [x_on_plane,y_on_plane] = texture_to_image_plane(nx,ny,j,i)
-            ray = camera.generate_ray(vec([j / nx, i / ny]))
+            ray = camera.generate_ray(vec([j / (nx-1), i / (ny-1)]))
             intersection = scene.intersect(ray)  # this will return a Hit object
             if intersection != no_hit:
                 material_at_pixel = intersection.material
